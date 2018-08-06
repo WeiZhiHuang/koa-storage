@@ -1,4 +1,3 @@
-
 /**
  * Module dependencies.
  */
@@ -19,16 +18,18 @@ const send = require('koa-send');
 
 app.use(logger());
 
-app.use(koaBody({
-  multipart: true,
-  formidable: {
-    maxFileSize: 10 * 1024 * 1024
-  }
-}));
+app.use(
+  koaBody({
+    multipart: true,
+    formidable: {
+      maxFileSize: 10 * 1024 * 1024,
+    },
+  }),
+);
 
 // custom 404
 
-app.use(async function (ctx, next) {
+app.use(async function(ctx, next) {
   await next();
   if (ctx.body || !ctx.idempotent) return;
   ctx.redirect('/404.html');
@@ -40,7 +41,7 @@ app.use(serve(path.join(__dirname, '/public')));
 
 // handle uploads
 
-app.use(async function (ctx, next) {
+app.use(async function(ctx, next) {
   // ignore non-POSTs
   if ('POST' != ctx.method) return await next();
 
@@ -67,7 +68,12 @@ app.use(async function (ctx, next) {
     if (ctx.request.url === '/') {
       // create a random file name until not in use
       do {
-        fileName = Date.now().toString() + Math.random().toString(36).substring(2) + ext;
+        fileName =
+          Date.now().toString() +
+          Math.random()
+            .toString(36)
+            .substring(2) +
+          ext;
         filePath = path.join(__dirname, 'storage', fileName);
       } while (fs.existsSync(filePath));
     } else {
@@ -83,9 +89,11 @@ app.use(async function (ctx, next) {
     reader.pipe(stream);
     console.log('uploading %s -> %s', file.name, stream.path);
     let url = ctx.request.href;
-    if (ctx.request.url === '/') { // if named
+    if (ctx.request.url === '/') {
+      // if named
       url += fileName;
-    } else if (files.length > 1) { // if unamed and file > 1
+    } else if (files.length > 1) {
+      // if unamed and file > 1
       url += `_${key}`;
     }
     result.push({ origin: file.name, url: url });
@@ -97,10 +105,11 @@ app.use(async function (ctx, next) {
 // handle downloads
 
 app.use(async (ctx) => {
-  await send(ctx, ctx.path, { root: __dirname + '/storage' });
+  await send(ctx, ctx.path.split('.')[0], { root: __dirname + '/storage' });
 });
 
 // listen
 
 app.listen(3000);
 console.log('listening on port 3000');
+
